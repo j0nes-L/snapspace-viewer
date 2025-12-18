@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { PLYLoader } from 'three/addons/loaders/PLYLoader.js';
 
-const FILENAME = '/pointclouds/fused_scene.ply';
+const FILENAME = './pointclouds/fused_scene.ply';
 const POINT_SIZE = 0.005;
 const BACKGROUND_COLOR = 0x111111;
 
