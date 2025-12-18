@@ -1,8 +1,7 @@
-// @ts-check
+javascript
 import { defineConfig } from 'astro/config';
 
-// https://astro.build/config
 export default defineConfig({
     site: 'https://j0nes-l.github.io',
-    base: '/q3pc',
+    base: '/q3pc/'
 });
