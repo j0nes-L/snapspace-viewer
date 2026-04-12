@@ -1,13 +1,4 @@
 ---
-const base = import.meta.env.BASE_URL;
-const rendererUrl = `${base}scripts/renderer.js`;
-
-const importMap = {
-    "imports": {
-        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-    }
-};
 ---
 <!DOCTYPE html>
 <html lang="de">
@@ -29,10 +20,9 @@ const importMap = {
             z-index: 10;
         }
     </style>
-    <script type="importmap" set:html={JSON.stringify(importMap)}></script>
 </head>
 <body>
-    <div id="info">Loading point cloud...</div> 
-    <script type="module" src={rendererUrl}></script>
+    <div id="info">Loading point cloud...</div>
+    <script src="../scripts/renderer.ts"></script>
 </body>
 </html>

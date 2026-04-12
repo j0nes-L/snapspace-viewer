@@ -1,5 +1,5 @@
 {
-  "name": "",
+  "name": "roombuilder-pointcloud-viewer",
   "type": "module",
   "version": "0.0.1",
   "scripts": {
@@ -9,7 +9,11 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/vercel": "^9.0.2",
-    "astro": "^5.16.6"
+    "astro": "^5.16.6",
+    "three": "^0.160.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.160.0",
+    "typescript": "^5.7.0"
   }
 }
