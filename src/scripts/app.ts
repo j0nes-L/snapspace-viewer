@@ -1,6 +1,6 @@
 import { setApiKey, login, fetchCaptures, fetchPointClouds, fetchPointCloudData } from './api';
 import type { CaptureListItem, PointCloudInfo } from './api';
-import { initViewer, loadPointCloudFromBuffer, unloadPointCloud } from './viewer';
+import { initViewer, loadPointCloudFromBuffer, unloadPointCloud, setPointSize } from './viewer';
 
 const loginScreen = document.getElementById('login-screen')!;
 const appScreen = document.getElementById('app-screen')!;
@@ -19,6 +19,12 @@ const logoutBtn = document.getElementById('logout-btn')!;
 const viewerEmpty = viewerContainer.querySelector('.viewer-empty')!;
 const viewerLoading = document.getElementById('viewer-loading')!;
 const viewerProgress = document.getElementById('viewer-progress')!;
+const pointSizeControl = document.getElementById('point-size-control')!;
+const pointSizeSlider = document.getElementById('point-size-slider') as HTMLInputElement;
+
+pointSizeSlider.addEventListener('input', () => {
+  setPointSize(parseFloat(pointSizeSlider.value));
+});
 
 const REMEMBER_KEY = 'rb_remember_pw';
 const SESSION_KEY = 'rb_logged_in';
@@ -34,6 +40,7 @@ toggleBtn.addEventListener('click', () => {
 refreshBtn.addEventListener('click', () => {
   selectedPcKey = null;
   unloadPointCloud();
+  pointSizeControl.classList.add('hidden');
   viewerEmpty.classList.remove('hidden');
   setStatus('');
   loadSessions();
@@ -114,6 +121,11 @@ function showApp(): void {
   loginScreen.classList.add('hidden');
   appScreen.classList.remove('hidden');
 
+  // Auto-collapse sidebar on mobile
+  if (window.innerWidth <= 768) {
+    sidebarEl.classList.add('collapsed');
+  }
+
   if (!viewerInitialised) {
     initViewer(viewerContainer as HTMLElement);
     viewerInitialised = true;
@@ -187,6 +199,7 @@ async function selectPointCloud(
     selectedPcKey = null;
     el.classList.remove('active');
     unloadPointCloud();
+    pointSizeControl.classList.add('hidden');
     viewerEmpty.classList.remove('hidden');
     setStatus('');
     return;
@@ -195,6 +208,11 @@ async function selectPointCloud(
   sessionList.querySelectorAll('.list-item').forEach((item) => item.classList.remove('active'));
   el.classList.add('active');
   selectedPcKey = pcKey;
+
+  // Auto-close sidebar on mobile
+  if (window.innerWidth <= 768) {
+    sidebarEl.classList.add('collapsed');
+  }
 
   setStatus('Downloading point cloud…');
   viewerEmpty.classList.add('hidden');
@@ -207,6 +225,8 @@ async function selectPointCloud(
     if (selectedPcKey !== pcKey) return;
 
     loadPointCloudFromBuffer(buffer, (msg) => setStatus(msg));
+    pointSizeControl.classList.remove('hidden');
+    pointSizeSlider.value = '0.005';
     setStatus(`${pc.filename} loaded`);
   } catch (err: unknown) {
     setStatus(`Error: ${err instanceof Error ? err.message : err}`);

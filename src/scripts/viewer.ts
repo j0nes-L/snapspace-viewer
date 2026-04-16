@@ -119,3 +119,8 @@ export function disposeViewer(): void {
   controls?.dispose();
 }
 
+export function setPointSize(size: number): void {
+  if (currentPoints && currentPoints.material instanceof THREE.PointsMaterial) {
+    currentPoints.material.size = size;
+  }
+}
