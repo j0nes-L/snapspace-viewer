@@ -40,8 +40,10 @@ export function initViewer(containerEl: HTMLElement): void {
   );
 
   renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setSize(container.clientWidth, container.clientHeight, false);
   renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.domElement.style.width = '100%';
+  renderer.domElement.style.height = '100%';
   container.appendChild(renderer.domElement);
 
   controls = new OrbitControls(camera, renderer.domElement);
@@ -49,6 +51,12 @@ export function initViewer(containerEl: HTMLElement): void {
   controls.dampingFactor = 0.1;
   controls.enablePan = true;
   controls.screenSpacePanning = true;
+
+  controls.mouseButtons = {
+    LEFT: THREE.MOUSE.ROTATE,
+    MIDDLE: THREE.MOUSE.PAN,
+    RIGHT: THREE.MOUSE.PAN,
+  };
 
   camera.position.set(0, 0, 3);
   controls.update();
@@ -98,6 +106,7 @@ export function initViewer(containerEl: HTMLElement): void {
 
 function enterFlyMode(): void {
   flyMode = true;
+  controls.saveState();
   controls.enabled = false;
   const euler = new THREE.Euler().setFromQuaternion(camera.quaternion, 'YXZ');
   flyYaw = euler.y;
@@ -270,14 +279,29 @@ function autoAlignGeometry(geometry: THREE.BufferGeometry): void {
 
 function onResize(): void {
   if (!container || !camera || !renderer) return;
-  camera.aspect = container.clientWidth / container.clientHeight;
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+  if (w === 0 || h === 0) return;
+  camera.aspect = w / h;
   camera.updateProjectionMatrix();
-  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.setSize(w, h, false);
 }
+
+let lastW = 0, lastH = 0;
 
 function animate(): void {
   animationId = requestAnimationFrame(animate);
   clockDelta = clock.getDelta();
+
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+  if (w > 0 && h > 0 && (w !== lastW || h !== lastH)) {
+    lastW = w;
+    lastH = h;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h, false);
+  }
 
   if (flyMode) {
     updateFlyMovement(clockDelta);
