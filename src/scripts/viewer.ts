@@ -258,9 +258,6 @@ function autoAlignGeometry(geometry: THREE.BufferGeometry): void {
   const posAttr = geometry.getAttribute('position');
   const arr = posAttr.array as Float32Array;
   const n = posAttr.count;
-  for (let i = 0; i < n; i++) {
-    arr[i * 3 + 2] = -arr[i * 3 + 2];
-  }
 
   geometry.computeBoundingBox();
   const bb = geometry.boundingBox!;
