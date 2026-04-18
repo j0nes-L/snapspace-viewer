@@ -21,6 +21,10 @@ export function setApiKey(key: string): void {
   apiKey = key;
 }
 
+export function getApiKey(): string {
+  return apiKey;
+}
+
 function authHeaders(): Record<string, string> {
   const headers: Record<string, string> = {};
   if (apiKey) {
@@ -67,11 +71,17 @@ export interface PointCloudsResponse {
   pointclouds: PointCloudInfo[];
   chunks: PointCloudInfo[];
   draco_chunks: PointCloudInfo[];
+  colmap_available?: boolean;
+  colmap_url?: string | null;
+  colmap_size_bytes?: number | null;
 }
 
 export interface ResolvedPointCloud {
   view: PointCloudInfo;
   download: PointCloudInfo;
+  colmap_available: boolean;
+  colmap_url: string | null;
+  colmap_size_bytes: number | null;
 }
 
 export function resolvePointCloud(resp: PointCloudsResponse): ResolvedPointCloud | null {
@@ -80,6 +90,9 @@ export function resolvePointCloud(resp: PointCloudsResponse): ResolvedPointCloud
   return {
     view: ply,
     download: ply,
+    colmap_available: !!resp.colmap_available,
+    colmap_url: resp.colmap_url || null,
+    colmap_size_bytes: resp.colmap_size_bytes || null,
   };
 }
 
@@ -145,3 +158,44 @@ export async function fetchPointCloudData(
   }
   return buf.buffer;
 }
+
+export async function fetchColmapZip(
+  captureId: string,
+  onProgress?: (fraction: number) => void,
+  knownTotalBytes?: number | null,
+): Promise<ArrayBuffer> {
+  const prodBase = (window.__ENV_API_BASE__ || 'https://api.00224466.xyz/roombuilder').replace(/\/+$/, '');
+  const res = await fetch(
+    `${prodBase}/captures/${captureId}/pointclouds/colmap.zip`,
+    { headers: authHeaders() },
+  );
+  if (!res.ok) throw new Error(`Failed to download COLMAP zip: ${res.status}`);
+
+  const clHeader = res.headers.get('Content-Length');
+  const total = clHeader ? parseInt(clHeader, 10) : (knownTotalBytes || 0);
+
+  if (!onProgress || !total || !res.body) {
+    return res.arrayBuffer();
+  }
+
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    received += value.length;
+    onProgress(received / total);
+  }
+
+  const buf = new Uint8Array(received);
+  let offset = 0;
+  for (const chunk of chunks) {
+    buf.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return buf.buffer;
+}
+
