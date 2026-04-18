@@ -171,6 +171,11 @@ loginForm.addEventListener('submit', async (e) => {
 const hasSession = sessionStorage.getItem(SESSION_KEY);
 const remembered = localStorage.getItem(REMEMBER_KEY);
 
+const envKey = (window.__ENV_API_KEY__ || '').trim();
+if (envKey) {
+  setApiKey(envKey);
+}
+
 if (hasSession) {
   showApp();
 } else if (remembered) {
@@ -212,10 +217,6 @@ function showApp(): void {
     viewerInitialised = true;
   }
 
-  const envKey = (window.__ENV_API_KEY__ || '').trim();
-  if (envKey) {
-    setApiKey(envKey);
-  }
 
   loadSessions();
 }

@@ -36,7 +36,7 @@ function authHeaders(): Record<string, string> {
 export async function login(password: string): Promise<boolean> {
   const res = await fetch(`${getApiBase()}/auth/login`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify({ password }),
   });
   if (res.status === 401) return false;

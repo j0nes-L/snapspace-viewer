@@ -8,9 +8,10 @@ export default defineConfig({
     server: {
       proxy: {
         '/api-proxy': {
-          target: 'https://api.00224466.xyz/echo3d',
+          target: 'https://api.00224466.xyz',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api-proxy/, ''),
+          secure: true,
+          rewrite: (path) => path.replace(/^\/api-proxy/, '/echo3d'),
         },
       },
     },
