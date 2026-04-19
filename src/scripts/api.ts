@@ -12,7 +12,7 @@ function getApiBase(): string {
   if (window.__ENV_API_BASE__) {
     return window.__ENV_API_BASE__.replace(/\/+$/, '');
   }
-  return 'https://api.00224466.xyz/echo3d';
+  return 'https://api.00224466.xyz/snapspace';
 }
 
 let apiKey = '';
@@ -226,7 +226,7 @@ export async function fetchColmapZip(
   onProgress?: (fraction: number) => void,
   knownTotalBytes?: number | null,
 ): Promise<ArrayBuffer> {
-  const prodBase = (window.__ENV_API_BASE__ || 'https://api.00224466.xyz/echo3d').replace(/\/+$/, '');
+  const prodBase = (window.__ENV_API_BASE__ || 'https://api.00224466.xyz/snapspace').replace(/\/+$/, '');
   const res = await fetch(
     `${prodBase}/captures/${captureId}/pointclouds/colmap.zip`,
     { headers: authHeaders() },

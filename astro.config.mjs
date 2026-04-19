@@ -2,7 +2,7 @@ import { defineConfig } from 'astro/config';
 
 export default defineConfig({
   site: 'https://j0nes-l.github.io',
-  base: '/echo3d-viewer',
+  base: '/snapspace-viewer',
   output: 'static',
   vite: {
     server: {
