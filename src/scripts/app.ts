@@ -1,4 +1,4 @@
-import { setApiKey, login, fetchCaptures, fetchPointClouds, fetchPointCloudData, fetchColmapZip, fetchMeshGlb, checkMeshAvailability, resolvePointCloud } from './api';
+import { setApiKey, login, fetchCaptures, fetchPointClouds, fetchPointCloudData, fetchColmapZip, fetchMeshGlb, checkMeshAvailability, resolvePointCloud, deleteCapture } from './api';
 import type { CaptureListItem, PointCloudInfo, ResolvedPointCloud } from './api';
 import { initViewer, loadPointCloudFromBuffer, unloadPointCloud, setPointSize, hasScalarScale, getPointCount } from './viewer';
 
@@ -291,10 +291,40 @@ function renderPcItem(captureId: string, resolved: ResolvedPointCloud): HTMLButt
   el.className = 'list-item';
   const sizeMB = (resolved.view.size_bytes / (1024 * 1024)).toFixed(1);
   el.innerHTML = `
-    <div class="item-title">${captureId}</div>
-    <div class="item-meta">${sizeMB} MB</div>
+    <div class="item-content">
+      <div class="item-title">${captureId}</div>
+      <div class="item-meta">${sizeMB} MB</div>
+    </div>
+    <div class="item-delete btn btn-icon" title="Delete capture"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></div>
   `;
-  el.addEventListener('click', () => selectPointCloud(captureId, resolved, el));
+  el.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('.item-delete')) return;
+    selectPointCloud(captureId, resolved, el);
+  });
+  el.querySelector('.item-delete')!.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    if (!confirm(`Delete Capture "${captureId}" ?`)) return;
+    try {
+      await deleteCapture(captureId);
+      if (selectedPcKey === `${captureId}/${resolved.view.filename}`) {
+        selectedPcKey = null;
+        unloadPointCloud();
+        viewerEmpty.classList.remove('hidden');
+        downloadBtn.classList.add('hidden');
+        downloadColmapBtn.classList.add('hidden');
+        downloadMeshBtn.classList.add('hidden');
+        pointSizeControl.classList.add('hidden');
+        setStatus('');
+      }
+      el.remove();
+      if (sessionList.children.length === 0) {
+        sessionList.innerHTML = '<div class="empty-state">No point clouds available.</div>';
+      }
+    } catch (err) {
+      setStatus(`Delete error: ${err instanceof Error ? err.message : err}`);
+    }
+  });
   sessionList.appendChild(el);
   return el;
 }

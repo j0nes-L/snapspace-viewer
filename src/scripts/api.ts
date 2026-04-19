@@ -158,6 +158,14 @@ export async function fetchMeshGlb(
   return buf.buffer;
 }
 
+export async function deleteCapture(captureId: string): Promise<void> {
+  const res = await fetch(`${getApiBase()}/captures/${captureId}`, {
+    method: 'DELETE',
+    headers: authHeaders(),
+  });
+  if (!res.ok) throw new Error(`Failed to delete capture: ${res.status}`);
+}
+
 export async function fetchCaptures(): Promise<CaptureListItem[]> {
   const res = await fetch(`${getApiBase()}/captures`, {
     headers: authHeaders(),

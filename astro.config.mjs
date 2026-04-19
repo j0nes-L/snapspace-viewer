@@ -11,7 +11,7 @@ export default defineConfig({
           target: 'https://api.00224466.xyz',
           changeOrigin: true,
           secure: true,
-          rewrite: (path) => path.replace(/^\/api-proxy/, '/echo3d'),
+          rewrite: (path) => path.replace(/^\/api-proxy/, '/snapspace'),
         },
       },
     },
