@@ -257,7 +257,6 @@ async function loadSessions(): Promise<void> {
 
     sessionList.innerHTML = '';
 
-    // Sort newest first (descending by id)
     captures.sort((a, b) => b.id.localeCompare(a.id));
 
     const results = await Promise.all(
@@ -278,7 +277,6 @@ async function loadSessions(): Promise<void> {
       const pcKey = `${capture.id}/${resolved.view.filename}`;
       if (selectedPcKey === pcKey) {
         el.classList.add('active');
-        // Update download buttons for currently loaded capture
         updateDownloadButtons(capture.id, resolved);
       }
     }
@@ -292,7 +290,6 @@ async function loadSessions(): Promise<void> {
 }
 
 function parseCaptureDate(captureId: string): string {
-  // Try to parse formats like "20260419_143022" or "2026-04-19T14:30:22" or similar timestamp-based IDs
   const m = captureId.match(/(\d{4})[\-_]?(\d{2})[\-_]?(\d{2})[\-_T]?(\d{2})[\-:_]?(\d{2})[\-:_]?(\d{2})/);
   if (m) {
     const [, y, mo, d, h, mi, s] = m;
@@ -422,7 +419,7 @@ async function selectPointCloud(
       pointSizeSlider.value = '0.005';
     }
 
-    setStatus(`Loaded .ply for ${captureId}`);
+    setStatus(`Loaded Point Cloud for Capture_${captureId}`);
   } catch (err: unknown) {
     selectedPcKey = null;
     el.classList.remove('active');

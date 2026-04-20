@@ -206,7 +206,25 @@ export async function loadPointCloudFromBuffer(
   }
 
   onProgress?.('Aligning…');
-  autoAlignGeometry(geometry);
+
+  const posC = geometry.getAttribute('position');
+  const arrC = posC.array as Float32Array;
+  for (let i = 0; i < arrC.length; i += 3) {
+    arrC[i] = -arrC[i];
+  }
+  posC.needsUpdate = true;
+
+  geometry.computeBoundingBox();
+  const bb = geometry.boundingBox!;
+  const cx = (bb.max.x + bb.min.x) / 2;
+  const cy = (bb.max.y + bb.min.y) / 2;
+  const cz = (bb.max.z + bb.min.z) / 2;
+  for (let i = 0; i < arrC.length; i += 3) {
+    arrC[i] -= cx;
+    arrC[i + 1] -= cy;
+    arrC[i + 2] -= cz;
+  }
+  posC.needsUpdate = true;
 
   geometry.computeBoundingBox();
   const minY = geometry.boundingBox!.min.y;
@@ -322,7 +340,6 @@ function updateGrid(radius: number): void {
         float line = min(grid.x, grid.y);
         float alpha = 1.0 - min(line, 1.0);
 
-        // Fade out with distance from origin
         float dist = length(vWorldPos.xz);
         float fade = 1.0 - smoothstep(uScale * 3.0, uScale * 8.0, dist);
 
