@@ -1,5 +1,5 @@
 import { setApiKey, login, fetchCaptures, fetchPointClouds, fetchPointCloudData, fetchColmapZip, fetchMeshGlb, checkMeshAvailability, resolvePointCloud, deleteCapture, clearPointCloudsCache } from './api';
-import type { CaptureListItem, PointCloudInfo, ResolvedPointCloud } from './api';
+import type { CaptureListItem, PointCloudInfo, ResolvedPointCloud, UserRole } from './api';
 import { initViewer, loadPointCloudFromBuffer, unloadPointCloud, setPointSize, hasScalarScale, getPointCount } from './viewer';
 
 const loginScreen = document.getElementById('login-screen')!;
@@ -137,10 +137,16 @@ downloadMeshBtn.addEventListener('click', async () => {
 
 const REMEMBER_KEY = 'rb_remember_pw';
 const SESSION_KEY = 'rb_logged_in';
+const ROLE_KEY = 'rb_role';
 const SPINNER = '<div class="spinner"></div>';
 
 let viewerInitialised = false;
 let selectedPcKey: string | null = null;
+let userRole: UserRole = 'viewer';
+
+function isAdmin(): boolean {
+  return userRole === 'admin';
+}
 
 toggleBtn.addEventListener('click', () => {
   sidebarEl.classList.toggle('collapsed');
@@ -153,6 +159,7 @@ refreshBtn.addEventListener('click', () => {
 
 logoutBtn.addEventListener('click', () => {
   sessionStorage.removeItem(SESSION_KEY);
+  sessionStorage.removeItem(ROLE_KEY);
   localStorage.removeItem(REMEMBER_KEY);
   window.location.reload();
 });
@@ -168,9 +175,11 @@ loginForm.addEventListener('submit', async (e) => {
   loginError.textContent = '';
 
   try {
-    const ok = await login(pw);
-    if (ok) {
+    const result = await login(pw);
+    if (result.ok) {
+      userRole = result.role ?? 'viewer';
       sessionStorage.setItem(SESSION_KEY, '1');
+      sessionStorage.setItem(ROLE_KEY, userRole);
       if (loginRemember.checked) {
         localStorage.setItem(REMEMBER_KEY, pw);
       } else {
@@ -200,6 +209,7 @@ if (envKey) {
 }
 
 if (hasSession) {
+  userRole = (sessionStorage.getItem(ROLE_KEY) as UserRole) || 'viewer';
   showApp();
 } else if (remembered) {
   autoLogin(remembered);
@@ -209,9 +219,11 @@ if (hasSession) {
 
 async function autoLogin(pw: string): Promise<void> {
   try {
-    const ok = await login(pw);
-    if (ok) {
+    const result = await login(pw);
+    if (result.ok) {
+      userRole = result.role ?? 'viewer';
       sessionStorage.setItem(SESSION_KEY, '1');
+      sessionStorage.setItem(ROLE_KEY, userRole);
       showApp();
       return;
     }
@@ -324,7 +336,7 @@ function renderSkeletonItem(captureId: string): HTMLButtonElement {
       <div class="item-title">${parseCaptureDate(captureId)}</div>
       <div class="item-meta"><span class="skeleton-bar"></span></div>
     </div>
-    <div class="item-delete item-delete-skeleton"></div>
+    ${isAdmin() ? '<div class="item-delete item-delete-skeleton"></div>' : ''}
   `;
   return el;
 }
@@ -337,12 +349,15 @@ function upgradeSkeletonItem(
   el.classList.remove('is-skeleton');
   el.disabled = false;
   const sizeMB = (resolved.view.size_bytes / (1024 * 1024)).toFixed(1);
+  const deleteBtn = isAdmin()
+    ? '<div class="item-delete btn btn-icon" title="Delete capture"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></div>'
+    : '';
   el.innerHTML = `
     <div class="item-content">
       <div class="item-title">${parseCaptureDate(captureId)}</div>
       <div class="item-meta">${sizeMB} MB</div>
     </div>
-    <div class="item-delete btn btn-icon" title="Delete capture"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></div>
+    ${deleteBtn}
   `;
   attachItemHandlers(el, captureId, resolved);
 }
@@ -357,7 +372,9 @@ function attachItemHandlers(
     if (target.closest('.item-delete')) return;
     selectPointCloud(captureId, resolved, el);
   });
-  el.querySelector('.item-delete')!.addEventListener('click', async (e) => {
+  const deleteEl = el.querySelector('.item-delete');
+  if (!deleteEl || !isAdmin()) return;
+  deleteEl.addEventListener('click', async (e) => {
     e.stopPropagation();
     if (!confirm(`Delete Capture "${captureId}" ?`)) return;
     try {

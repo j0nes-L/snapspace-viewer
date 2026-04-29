@@ -33,16 +33,25 @@ function authHeaders(): Record<string, string> {
   return headers;
 }
 
-export async function login(password: string): Promise<boolean> {
+export type UserRole = 'admin' | 'viewer';
+
+export interface LoginResult {
+  ok: boolean;
+  role: UserRole | null;
+}
+
+export async function login(password: string): Promise<LoginResult> {
   const res = await fetch(`${getApiBase()}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify({ password }),
   });
-  if (res.status === 401) return false;
+  if (res.status === 401) return { ok: false, role: null };
   if (!res.ok) throw new Error(`Login failed: ${res.status}`);
   const data = await res.json();
-  return data.authenticated === true;
+  if (data.authenticated !== true) return { ok: false, role: null };
+  const role: UserRole = data.role === 'admin' ? 'admin' : 'viewer';
+  return { ok: true, role };
 }
 
 export interface CaptureListItem {
